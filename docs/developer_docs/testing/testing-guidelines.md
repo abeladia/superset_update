@@ -26,7 +26,9 @@ under the License.
 
 We feel that tests are an important part of a feature and not an additional or optional effort. That's why we colocate test files with functionality and sometimes write tests upfront to help validate requirements and shape the API of our components. Every new component or file added should have an associated test file with the `.test` extension.
 
-We use Jest, React Testing Library (RTL), and Cypress to write our unit, integration, and end-to-end tests. For each type, we have a set of best practices/tips described below:
+We use Jest, React Testing Library (RTL), and Playwright to write our unit, integration, and end-to-end tests. For each type, we have a set of best practices/tips described below:
+
+Playwright is the preferred framework for end-to-end tests. The legacy Cypress suite is being migrated to Playwright — see [End-to-End Testing](./e2e-testing.md) for the recommended setup and patterns. The Cypress guidance below is retained for maintaining and migrating the remaining legacy tests.
 
 ## Jest
 
@@ -80,9 +82,9 @@ Prefer the [user-event](https://github.com/testing-library/user-event) library, 
 
 You can find an example of a test [here](https://github.com/apache/superset/blob/master/superset-frontend/src/dashboard/components/PublishedStatus/PublishedStatus.test.tsx).
 
-## Cypress
+## End-to-End Testing
 
-### Prefer to use Cypress for e2e testing and RTL for integration testing
+### Prefer to use Playwright for e2e testing and RTL for integration testing
 
 Here it's important to make the distinction between e2e and integration testing. This [article](https://www.onpathtesting.com/blog/end-to-end-vs-integration-testing) gives an excellent definition:
 
@@ -91,7 +93,11 @@ Here it's important to make the distinction between e2e and integration testing.
 > A typical software project consists of multiple software units, usually coded by different developers. Integration testing combines those software units logically and tests them as a group.
 > Essentially, integration testing verifies whether or not the individual modules or services that make up your application work well together. The purpose of this level of testing is to expose defects in the interaction between these software modules when they are integrated.
 
-Do not use Cypress when RTL can do it better and faster. Many of the Cypress tests that we have right now, fall into the integration testing category and can be ported to RTL which is much faster and gives more immediate feedback. Cypress should be used mainly for end-to-end testing, replicating the user experience, with positive and negative flows.
+Do not use an end-to-end test when RTL can do it better and faster. Many of the end-to-end tests that we have right now fall into the integration testing category and can be ported to RTL which is much faster and gives more immediate feedback. Playwright is the preferred framework for end-to-end testing, replicating the user experience, with positive and negative flows. The remaining Cypress tests are legacy and are being migrated to Playwright.
+
+### Legacy Cypress guidance
+
+The tips below apply to the legacy Cypress suite and are kept for maintenance and migration. New end-to-end tests should follow the Playwright patterns documented in [End-to-End Testing](./e2e-testing.md).
 
 ### Isolated and standalone tests
 
