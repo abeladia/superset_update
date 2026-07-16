@@ -46,7 +46,7 @@ const Code = styled.code`
 export type TemplateParamsEditorProps = {
   queryEditorId: string;
   language: 'yaml' | 'json';
-  onChange: (params: any) => void;
+  onChange: (params: string) => void;
 };
 
 const TemplateParamsEditor = ({
@@ -54,7 +54,7 @@ const TemplateParamsEditor = ({
   language,
   onChange = () => {},
 }: TemplateParamsEditorProps) => {
-  const [parsedJSON, setParsedJSON] = useState({});
+  const [parsedJSON, setParsedJSON] = useState<Record<string, unknown>>({});
   const [isValid, setIsValid] = useState(true);
 
   const { templateParams } = useQueryEditor(queryEditorId, ['templateParams']);
@@ -65,7 +65,7 @@ const TemplateParamsEditor = ({
       setParsedJSON(JSON.parse(code));
       setIsValid(true);
     } catch {
-      setParsedJSON({} as any);
+      setParsedJSON({});
       setIsValid(false);
     }
   }, [code]);

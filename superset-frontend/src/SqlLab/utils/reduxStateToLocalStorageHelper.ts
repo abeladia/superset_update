@@ -28,6 +28,7 @@ import type {
   SqlLabRootState,
   Table,
 } from 'src/SqlLab/types';
+import type { AnyAction } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
 import { pick } from 'lodash-es';
 import { tableApiUtil } from 'src/hooks/apiResources/tables';
@@ -135,7 +136,7 @@ export function clearQueryEditors(queryEditors: QueryEditor[]) {
 }
 
 export function rehydratePersistedState(
-  dispatch: ThunkDispatch<SqlLabRootState, unknown, any>,
+  dispatch: ThunkDispatch<SqlLabRootState, unknown, AnyAction>,
   state: SqlLabRootState,
 ) {
   // Rehydrate server side persisted table metadata
