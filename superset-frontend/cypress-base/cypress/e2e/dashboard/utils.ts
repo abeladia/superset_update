@@ -36,30 +36,6 @@ export const WORLD_HEALTH_CHARTS = [
   { name: 'Box plot', viz: 'box_plot' },
 ] as ChartSpec[];
 
-export const SUPPORTED_TIER1_CHARTS = [
-  { name: 'Big Number', viz: 'big_number_total' },
-  { name: 'Big Number with Trendline', viz: 'big_number' },
-  { name: 'Pie Chart', viz: 'pie' },
-  { name: 'Table', viz: 'table' },
-  { name: 'Pivot Table', viz: 'pivot_table_v2' },
-  { name: 'Line Chart', viz: 'echarts_timeseries_line' },
-  { name: 'Area Chart', viz: 'echarts_area' },
-  { name: 'Scatter Chart', viz: 'echarts_timeseries_scatter' },
-  { name: 'Bar Chart', viz: 'echarts_timeseries_bar' },
-] as ChartSpec[];
-
-export const SUPPORTED_TIER2_CHARTS = [
-  { name: 'Box Plot Chart', viz: 'box_plot' },
-  { name: 'Generic Chart', viz: 'echarts_timeseries' },
-  { name: 'Smooth Line Chart', viz: 'echarts_timeseries_smooth' },
-  { name: 'Step Line Chart', viz: 'echarts_timeseries_step' },
-  { name: 'Funnel Chart', viz: 'funnel' },
-  { name: 'Gauge Chart', viz: 'gauge_chart' },
-  { name: 'Radar Chart', viz: 'radar' },
-  { name: 'Treemap V2 Chart', viz: 'treemap_v2' },
-  { name: 'Mixed Chart', viz: 'mixed_timeseries' },
-] as ChartSpec[];
-
 export const testItems = {
   dashboard: 'Cypress test Dashboard',
   dataset: 'Vehicle Sales',
@@ -553,7 +529,3 @@ export function openTab(
     .click();
   cy.wait(500);
 }
-
-export const openTopLevelTab = (tabName: string) => {
-  cy.get("div#TABS-TOP div[role='tab']").contains(tabName).click();
-};
