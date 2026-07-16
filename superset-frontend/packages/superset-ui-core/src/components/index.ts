@@ -160,6 +160,8 @@ export {
   type SliderRangeProps,
 } from './Slider';
 
+export { Spin } from './Spin';
+
 export { Switch, type SwitchProps } from './Switch';
 
 export {

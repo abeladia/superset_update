@@ -18,7 +18,7 @@
  */
 import { useEffect } from 'react';
 import { t } from '@apache-superset/core/translation';
-import { Spin, Select, Form } from 'antd';
+import { Spin, Select, Form } from '@superset-ui/core/components';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import type {
   JsonSchema,
@@ -219,7 +219,6 @@ function DynamicFieldControl(props: ControlProps) {
           value={(props.data as string | number | undefined) ?? undefined}
           onChange={value => props.handleChange(props.path, value)}
           options={options}
-          style={{ width: '100%' }}
           disabled={!props.enabled || refreshing}
           loading={refreshing}
           allowClear
@@ -276,7 +275,7 @@ function EnumNamesControl(props: ControlProps) {
     (schema['x-enumNames'] as string[]) ?? enumValues.map(String);
 
   const options = enumValues.map((value, index) => ({
-    value,
+    value: value as string | number,
     label: enumNames[index] ?? String(value),
   }));
 
@@ -289,7 +288,6 @@ function EnumNamesControl(props: ControlProps) {
         value={props.data ?? null}
         onChange={value => props.handleChange(props.path, value)}
         options={options}
-        style={{ width: '100%' }}
         disabled={!props.enabled}
         allowClear
         loading={!!refreshingSchema}
@@ -363,11 +361,10 @@ export function MultiEnumControl(props: ControlProps) {
         value={value as (string | number)[]}
         onChange={next => props.handleChange(props.path, next)}
         options={options}
-        style={{ width: '100%' }}
         disabled={!props.enabled}
         loading={!!refreshingSchema}
         allowClear
-        optionFilterProp="label"
+        optionFilterProps={['label']}
         placeholder={
           (props.uischema?.options as Record<string, unknown>)
             ?.placeholderText as string | undefined
