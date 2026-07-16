@@ -115,7 +115,7 @@ const TablePreview: FC<Props> = ({ dbId, catalog, schema, tableName }) => {
   const theme = useTheme();
   const [databaseName, backend, disableDataPreview] = useSelector<
     SqlLabRootState,
-    string[]
+    [string | undefined, string | undefined, boolean | undefined]
   >(
     ({ sqlLab: { databases } }) => [
       databases[dbId]?.database_name,

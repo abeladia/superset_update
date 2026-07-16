@@ -39,7 +39,7 @@ export function useAnnotations(params: FetchValidationQueryParams) {
     // or not the backend has a validator configured for it.
     Boolean(
       common?.conf?.SQL_VALIDATORS_BY_ENGINE?.[
-        sqlLab?.databases?.[dbId || '']?.backend
+        sqlLab?.databases?.[dbId || '']?.backend ?? ''
       ],
     ),
   );

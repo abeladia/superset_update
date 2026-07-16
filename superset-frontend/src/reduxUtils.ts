@@ -22,11 +22,11 @@ import persistState, { StorageAdapter } from 'redux-localstorage';
 import { isEqual, omitBy, omit, isEqualWith } from 'lodash-es';
 import { ensureIsArray } from '@superset-ui/core';
 
-export function addToObject(
-  state: Record<string, any>,
+export function addToObject<S extends Record<string, any>>(
+  state: S,
   arrKey: string,
   obj: Record<string, any>,
-) {
+): S {
   const newObject = { ...state[arrKey] };
   const copiedObject = { ...obj };
 
@@ -34,27 +34,27 @@ export function addToObject(
     copiedObject.id = nanoid();
   }
   newObject[copiedObject.id] = copiedObject;
-  return { ...state, [arrKey]: newObject };
+  return { ...state, [arrKey]: newObject } as S;
 }
 
-export function alterInObject(
-  state: Record<string, any>,
+export function alterInObject<S extends Record<string, any>>(
+  state: S,
   arrKey: string,
   obj: Record<string, any>,
   alterations: Record<string, any>,
-) {
+): S {
   const newObject = { ...state[arrKey] };
   newObject[obj.id] = { ...newObject[obj.id], ...alterations };
-  return { ...state, [arrKey]: newObject };
+  return { ...state, [arrKey]: newObject } as S;
 }
 
-export function alterInArr(
-  state: Record<string, any>,
+export function alterInArr<S extends Record<string, any>>(
+  state: S,
   arrKey: string,
   obj: Record<string, any>,
   alterations: Record<string, any>,
   idKey = 'id',
-) {
+): S {
   // Finds an item in an array in the state and replaces it with a
   // new object with an altered property
   const newArr: unknown[] = [];
@@ -65,22 +65,22 @@ export function alterInArr(
       newArr.push(arrItem);
     }
   });
-  return { ...state, [arrKey]: newArr };
+  return { ...state, [arrKey]: newArr } as S;
 }
 
-export function removeFromArr(
-  state: Record<string, any>,
+export function removeFromArr<S extends Record<string, any>>(
+  state: S,
   arrKey: string,
   obj: Record<string, any>,
   idKey = 'id',
-) {
+): S {
   const newArr: unknown[] = [];
   state[arrKey].forEach((arrItem: Record<string, any>) => {
     if (!(obj[idKey] === arrItem[idKey])) {
       newArr.push(arrItem);
     }
   });
-  return { ...state, [arrKey]: newArr };
+  return { ...state, [arrKey]: newArr } as S;
 }
 
 export function getFromArr(
@@ -97,12 +97,12 @@ export function getFromArr(
   return obj;
 }
 
-export function addToArr(
-  state: Record<string, any>,
+export function addToArr<S extends Record<string, any>>(
+  state: S,
   arrKey: string,
   obj: Record<string, any>,
   prepend = false,
-) {
+): S {
   const newObj = { ...obj };
   if (!newObj.id) {
     newObj.id = nanoid();
@@ -113,15 +113,15 @@ export function addToArr(
   } else {
     newState[arrKey] = [...state[arrKey], newObj];
   }
-  return { ...state, ...newState };
+  return { ...state, ...newState } as S;
 }
 
-export function extendArr(
-  state: Record<string, any>,
+export function extendArr<S extends Record<string, any>>(
+  state: S,
   arrKey: string,
   arr: Record<string, any>[],
   prepend = false,
-) {
+): S {
   const newArr = [...arr];
   newArr.forEach(el => {
     if (!el.id) {
@@ -135,7 +135,7 @@ export function extendArr(
   } else {
     newState[arrKey] = [...state[arrKey], ...newArr];
   }
-  return { ...state, ...newState };
+  return { ...state, ...newState } as S;
 }
 
 export function initEnhancer(
