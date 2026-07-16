@@ -66,7 +66,7 @@ const onClick = (
   isStopAction: boolean,
   runQuery: () => void = () => undefined,
   stopQuery = () => {},
-  logAction: (name: string, payload: Record<string, any>) => void,
+  logAction: ReturnType<typeof useLogAction>,
 ): void => {
   const eventName = isStopAction
     ? LOG_ACTIONS_SQLLAB_STOP_QUERY

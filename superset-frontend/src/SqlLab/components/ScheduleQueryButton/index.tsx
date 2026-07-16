@@ -48,21 +48,37 @@ const validators = {
   less_equal: (a: number, b: number) => a <= b,
 };
 
+type JSONSchemaProperty = {
+  default?: string;
+  format?: string;
+  [key: string]: unknown;
+};
+
+type ScheduledQueriesJSONSchema = {
+  properties: Record<string, JSONSchemaProperty>;
+};
+
+type ValidationRule = {
+  name: keyof typeof validators;
+  arguments: string[];
+  container?: string;
+  message: string;
+};
+
 const getJSONSchema = () => {
-  const jsonSchema = scheduledQueriesConf?.JSONSCHEMA;
+  const jsonSchema: ScheduledQueriesJSONSchema | undefined =
+    scheduledQueriesConf?.JSONSCHEMA;
   // parse date-time into usable value (eg, 'today' => `new Date()`)
   if (jsonSchema) {
-    Object.entries(jsonSchema.properties).forEach(
-      ([key, value]: [string, any]) => {
-        if (value.default && value.format === 'date-time') {
-          const parsedDate = parseDate(value.default);
-          jsonSchema.properties[key] = {
-            ...value,
-            default: parsedDate ? parsedDate.toISOString() : null,
-          };
-        }
-      },
-    );
+    Object.entries(jsonSchema.properties).forEach(([key, value]) => {
+      if (value.default && value.format === 'date-time') {
+        const parsedDate = parseDate(value.default);
+        jsonSchema.properties[key] = {
+          ...value,
+          default: parsedDate ? parsedDate.toISOString() : null,
+        };
+      }
+    });
     return jsonSchema;
   }
   return {};
@@ -73,13 +89,13 @@ const getUISchema = () => scheduledQueriesConf?.UISCHEMA;
 const getValidationRules = () => scheduledQueriesConf?.VALIDATION || [];
 
 const getValidator = () => {
-  const rules: any = getValidationRules();
-  return (formData: Record<string, any>, errors: FormValidation) => {
-    rules.forEach((rule: any) => {
-      const test = validators[rule.name as keyof typeof validators];
+  const rules: ValidationRule[] = getValidationRules();
+  return (formData: Record<string, unknown>, errors: FormValidation) => {
+    rules.forEach((rule: ValidationRule) => {
+      const test = validators[rule.name];
       const args = rule.arguments.map((name: string) => formData[name]);
       const container = rule.container || rule.arguments.slice(-1)[0];
-      if (!test(args[0], args[1])) {
+      if (!test(args[0] as number, args[1] as number)) {
         errors[container]?.addError(rule.message);
       }
     });

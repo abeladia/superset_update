@@ -103,10 +103,16 @@ enum LimitingFactor {
   NotLimited = 'NOT_LIMITED',
 }
 
+interface ResultSetDatabase {
+  allows_subquery?: boolean;
+  allows_virtual_table_explore?: boolean;
+  explore_database_id?: number;
+}
+
 export interface ResultSetProps {
   cache?: boolean;
   csv?: boolean;
-  database?: Record<string, any>;
+  database?: ResultSetDatabase;
   displayLimit: number;
   queryId: string;
   search?: boolean;
