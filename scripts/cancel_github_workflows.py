@@ -49,10 +49,12 @@ github_repo = os.environ.get("GITHUB_REPOSITORY", "apache/superset")
 def request(
     method: Literal["GET", "POST", "DELETE", "PUT"], endpoint: str, **kwargs: Any
 ) -> dict[str, Any]:
-    resp = requests.request(  # noqa: S113
+    timeout = kwargs.pop("timeout", 30)
+    resp = requests.request(
         method,
         f"https://api.github.com/{endpoint.lstrip('/')}",
         headers={"Authorization": f"Bearer {github_token}"},
+        timeout=timeout,
         **kwargs,
     ).json()
     if "message" in resp:
