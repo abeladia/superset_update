@@ -16,12 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { normalizeTimestamp, QueryState } from '@superset-ui/core';
+import {
+  normalizeTimestamp,
+  QueryState,
+  type QueryResponse,
+} from '@superset-ui/core';
 import { t } from '@apache-superset/core/translation';
 import { isEqual, omit } from 'lodash-es';
 import { shallowEqual } from 'react-redux';
 import { now } from '@superset-ui/core/utils/dates';
-import type { SqlLabRootState, QueryEditor, Table } from '../types';
+import type { DatabaseObject } from 'src/features/databases/types';
+import type {
+  SqlLabRootState,
+  QueryEditor,
+  Table,
+  SqlLabDatabase,
+} from '../types';
 import * as actions from '../actions/sqlLab';
 import type { SqlLabAction } from '../actions/sqlLab';
 import {
@@ -69,8 +79,7 @@ export default function sqlLabReducer(
   state: SqlLabState = {} as SqlLabState,
   action: SqlLabAction,
 ): SqlLabState {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const actionHandlers: Record<string, () => any> = {
+  const actionHandlers: Record<string, () => SqlLabState> = {
     [actions.ADD_QUERY_EDITOR]() {
       const mergeUnsavedState = alterInArr(
         state,
@@ -82,7 +91,7 @@ export default function sqlLabReducer(
       );
       const newState = {
         ...mergeUnsavedState,
-        tabHistory: [...state.tabHistory, action.queryEditor!.id],
+        tabHistory: [...state.tabHistory, action.queryEditor!.id!],
       };
       return addToArr(newState, 'queryEditors', {
         ...action.queryEditor!,
@@ -92,11 +101,11 @@ export default function sqlLabReducer(
     [actions.QUERY_EDITOR_SAVED]() {
       const { query, result, clientId } = action;
       const existing = state.queryEditors.find(qe => qe.id === clientId);
+      if (!existing) return state;
       return alterInArr(
         state,
         'queryEditors',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        existing as any,
+        existing,
         {
           remoteId: result!.remoteId,
           name: (query as { name: string }).name,
@@ -128,14 +137,13 @@ export default function sqlLabReducer(
       const qe = {
         remoteId: progenitor.remoteId,
         name: t('Copy of %s', progenitor.name),
-        dbId: action.query!.dbId ? action.query!.dbId : null,
+        dbId: action.query!.dbId ? action.query!.dbId : undefined,
         catalog: action.query!.catalog ? action.query!.catalog : null,
-        schema: action.query!.schema ? action.query!.schema : null,
+        schema: action.query!.schema ? action.query!.schema : undefined,
         autorun: true,
         sql: action.query!.sql,
         queryLimit: action.query!.queryLimit,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        maxRow: (action.query as any)?.maxRow,
+        maxRow: action.query?.maxRow,
       };
       const stateWithoutUnsavedState = {
         ...state,
@@ -143,8 +151,7 @@ export default function sqlLabReducer(
       };
       return sqlLabReducer(
         stateWithoutUnsavedState,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        actions.addQueryEditor(qe as any),
+        actions.addQueryEditor(qe),
       );
     },
     [actions.REMOVE_QUERY_EDITOR]() {
@@ -159,8 +166,7 @@ export default function sqlLabReducer(
         (qe: QueryEditor) => qe.tabViewId ?? qe.id,
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const queries: any = {};
+      const queries: SqlLabState['queries'] = {};
       Object.keys(state.queries).forEach(k => {
         const query = state.queries[k];
         if (qeIds.indexOf(query.sqlEditorId) > -1) {
@@ -209,7 +215,7 @@ export default function sqlLabReducer(
       return { ...state, queries: newQueries };
     },
     [actions.RESET_STATE]() {
-      return { ...action.sqlLabInitialState };
+      return { ...action.sqlLabInitialState! };
     },
     [actions.MERGE_TABLE]() {
       const at = { ...action.table } as Table;
@@ -324,7 +330,7 @@ export default function sqlLabReducer(
           ...state.queryCostEstimates,
           [action.query!.id!]: {
             completed: true,
-            cost: action.json!.result,
+            cost: action.json!.result as Record<string, unknown>[],
             error: null,
           },
         },
@@ -338,7 +344,7 @@ export default function sqlLabReducer(
           [action.query!.id!]: {
             completed: false,
             cost: null,
-            error: action.error,
+            error: action.error ?? null,
           },
         },
       };
@@ -397,9 +403,8 @@ export default function sqlLabReducer(
       });
     },
     [actions.CLEAR_QUERY_RESULTS]() {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newResults = { ...(action.query as any).results };
-      newResults.data = [];
+      const existingQuery = state.queries[action.query!.id!];
+      const newResults = { ...existingQuery?.results, data: [] };
       return alterInObject(state, 'queries', action.query!, {
         results: newResults,
         cached: true,
@@ -419,8 +424,7 @@ export default function sqlLabReducer(
       ) {
         return state;
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const alts: any = {
+      const alts: Record<string, unknown> = {
         endDttm: now(),
         progress: 100,
         results: action.results,
@@ -478,7 +482,7 @@ export default function sqlLabReducer(
                 },
               )
             : mergeUnsavedState),
-          tabHistory: [...state.tabHistory, action.queryEditor!.id],
+          tabHistory: [...state.tabHistory, action.queryEditor!.id!],
         };
       }
       return state;
@@ -505,7 +509,7 @@ export default function sqlLabReducer(
       return extendArr(state, 'tables', action.tables!);
     },
     [actions.SET_ACTIVE_SOUTHPANE_TAB]() {
-      return { ...state, activeSouthPaneTab: action.tabId };
+      return { ...state, activeSouthPaneTab: action.tabId! };
     },
     [actions.MIGRATE_QUERY_EDITOR]() {
       try {
@@ -549,7 +553,7 @@ export default function sqlLabReducer(
       const query = {
         ...state.queries[action.queryId!],
         // point query to migrated query editor
-        sqlEditorId: action.queryEditorId,
+        sqlEditorId: action.queryEditorId!,
       };
       const queries = { ...state.queries, [query.id]: query };
       return { ...state, queries };
@@ -720,10 +724,8 @@ export default function sqlLabReducer(
       };
     },
     [actions.SET_DATABASES]() {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const databases: any = {};
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (action.databases as any[])!.forEach((db: any) => {
+      const databases: Record<string, SqlLabDatabase> = {};
+      (action.databases as unknown as DatabaseObject[]).forEach(db => {
         databases[db.id] = {
           ...db,
           extra_json: JSON.parse(db.extra || ''),
@@ -736,15 +738,14 @@ export default function sqlLabReducer(
       // Fetch the updates to the queries present in the store.
       let change = false;
       let { queriesLastUpdate } = state;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.entries(action.alteredQueries!).forEach(
-        ([id, changedQuery]: [string, any]) => {
+      Object.entries(action.alteredQueries ?? {}).forEach(
+        ([id, changedQuery]) => {
           if (
             !state.queries.hasOwnProperty(id) ||
             (state.queries[id].state !== QueryState.Stopped &&
               state.queries[id].state !== QueryState.Failed)
           ) {
-            const changedOn = normalizeTimestamp(changedQuery.changed_on);
+            const changedOn = normalizeTimestamp(changedQuery.changed_on ?? '');
             const timestamp = Date.parse(changedOn);
             if (timestamp > queriesLastUpdate) {
               queriesLastUpdate = timestamp;
@@ -765,6 +766,7 @@ export default function sqlLabReducer(
               // when it started fetching or finished rendering results
               state:
                 currentState === QueryState.Success &&
+                prevState &&
                 [
                   QueryState.Fetching,
                   QueryState.Success,
@@ -772,7 +774,7 @@ export default function sqlLabReducer(
                 ].includes(prevState)
                   ? prevState
                   : currentState,
-            };
+            } as QueryResponse & { inLocalStorage?: boolean };
             if (
               newQueries[id].state === QueryState.Success &&
               newQueries[id].runAsync === false &&
@@ -813,22 +815,31 @@ export default function sqlLabReducer(
             }
             return true;
           })
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map(([id, query]: [string, any]) => [
-            id,
-            {
-              ...query,
-              state:
-                query.resultsKey && query.results?.status
-                  ? query.results.status
-                  : query.state,
+          .map(
+            ([id, query]): [
+              string,
+              QueryResponse & { inLocalStorage?: boolean },
+            ] => {
+              const resultStatus = (
+                query.results as { status?: QueryState } | undefined
+              )?.status;
+              return [
+                id,
+                {
+                  ...query,
+                  state:
+                    query.resultsKey && resultStatus
+                      ? resultStatus
+                      : query.state,
+                },
+              ];
             },
-          ]),
+          ),
       );
       return { ...state, queries: cleanedQueries };
     },
     [actions.SET_USER_OFFLINE]() {
-      return { ...state, offline: action.offline };
+      return { ...state, offline: action.offline! };
     },
     [actions.CREATE_DATASOURCE_STARTED]() {
       return { ...state, isDatasourceLoading: true, errorMessage: null };
@@ -842,13 +853,17 @@ export default function sqlLabReducer(
       };
     },
     [actions.CREATE_DATASOURCE_FAILED]() {
-      return { ...state, isDatasourceLoading: false, errorMessage: action.err };
+      return {
+        ...state,
+        isDatasourceLoading: false,
+        errorMessage: action.err ?? null,
+      };
     },
     [actions.SET_EDITOR_TAB_LAST_UPDATE]() {
-      return { ...state, editorTabLastUpdatedAt: action.timestamp };
+      return { ...state, editorTabLastUpdatedAt: action.timestamp! };
     },
     [actions.SET_LAST_UPDATED_ACTIVE_TAB]() {
-      return { ...state, lastUpdatedActiveTab: action.queryEditorId };
+      return { ...state, lastUpdatedActiveTab: action.queryEditorId! };
     },
   };
   if (action.type in actionHandlers) {

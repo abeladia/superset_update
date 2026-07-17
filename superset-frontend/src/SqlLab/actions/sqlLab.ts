@@ -20,7 +20,11 @@ import { nanoid } from 'nanoid';
 import rison from 'rison';
 import type { AnyAction } from 'redux';
 import type { ThunkAction, ThunkDispatch } from 'redux-thunk';
-import type { QueryColumn, SupersetError } from '@superset-ui/core';
+import type {
+  QueryColumn,
+  QueryResponse,
+  SupersetError,
+} from '@superset-ui/core';
 import {
   FeatureFlag,
   SupersetClient,
@@ -80,7 +84,17 @@ export interface Query {
   inLocalStorage?: boolean;
   executedSql?: string;
   query_id?: number;
+  maxRow?: number;
 }
+
+/**
+ * Query payload delivered by the polling endpoint. It carries the backend
+ * `changed_on` timestamp alongside a partial set of query fields to merge into
+ * the stored query.
+ */
+export type RefreshedQuery = Partial<QueryResponse> & {
+  changed_on?: string;
+};
 
 export interface Database {
   id: number;
@@ -191,7 +205,7 @@ export interface SqlLabAction {
   // Query related
   query?: Query | Partial<Query>;
   queries?: Query[];
-  alteredQueries?: Record<string, Partial<Query>>;
+  alteredQueries?: Record<string, RefreshedQuery>;
   queryId?: string;
   // Table related
   table?: Table | Partial<Table>;
@@ -227,7 +241,7 @@ export interface SqlLabAction {
   timestamp?: number;
   interval?: number;
   offline?: boolean;
-  datasource?: unknown;
+  datasource?: string;
   clientId?: string;
   result?: Record<string, unknown>;
   prepend?: boolean;
@@ -308,7 +322,8 @@ export function resetState(data?: Record<string, unknown>): SqlLabThunkAction {
 
     dispatch({
       type: RESET_STATE,
-      sqlLabInitialState: initialState.sqlLab as SqlLabRootState['sqlLab'],
+      sqlLabInitialState:
+        initialState.sqlLab as unknown as SqlLabRootState['sqlLab'],
     });
     rehydratePersistedState(
       dispatch,
@@ -1480,7 +1495,7 @@ export function removeTables(
 }
 
 export function refreshQueries(
-  alteredQueries: Record<string, Query>,
+  alteredQueries: Record<string, RefreshedQuery>,
 ): SqlLabAction {
   return { type: REFRESH_QUERIES, alteredQueries };
 }

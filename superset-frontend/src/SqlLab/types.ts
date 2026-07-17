@@ -27,6 +27,7 @@ import type {
   DropdownButtonProps,
 } from '@superset-ui/core/components';
 import type { TableMetaData } from 'src/hooks/apiResources';
+import type { DatabaseObject } from 'src/features/databases/types';
 import type Subject from 'src/types/Subject';
 
 export type QueryButtonProps = DropdownButtonProps | ButtonProps;
@@ -83,6 +84,21 @@ export type toastState = {
   noDuplicate: boolean;
 };
 
+export interface SqlLabAlert {
+  id: string;
+  msg: string;
+  severity: 'info' | 'warning' | 'danger';
+}
+
+/**
+ * Shape of a database entry stored in SqlLab state. It reuses the shared
+ * `DatabaseObject` and adds the top-level `disable_data_preview` flag that the
+ * SQL Lab payload surfaces alongside the connection metadata.
+ */
+export type SqlLabDatabase = DatabaseObject & {
+  disable_data_preview?: boolean;
+};
+
 export type UnsavedQueryEditor = Partial<QueryEditor>;
 
 export interface Table {
@@ -102,10 +118,12 @@ export interface Table {
 export type SqlLabRootState = {
   sqlLab: {
     activeSouthPaneTab: string | number; // default is string; action.newQuery.id is number
-    alerts: any[];
-    databases: Record<string, any>;
+    alerts: SqlLabAlert[];
+    databases: Record<string, SqlLabDatabase>;
     dbConnect: boolean;
     offline: boolean;
+    isDatasourceLoading?: boolean;
+    datasource?: string;
     queries: Record<string, QueryResponse & { inLocalStorage?: boolean }>;
     queryEditors: QueryEditor[];
     tabHistory: string[]; // default is activeTab ? [activeTab.id.toString()] : []
@@ -149,7 +167,7 @@ export interface SchemaOption {
 }
 
 export interface QueryCostEstimate {
-  completed: string;
-  cost: Record<string, any>[];
-  error: string;
+  completed: boolean;
+  cost: Record<string, unknown>[] | null;
+  error: string | null;
 }
