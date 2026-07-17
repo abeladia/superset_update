@@ -58,10 +58,11 @@ test('falls back to raw enum values when x-enumNames is absent', async () => {
   const options = container.ownerDocument.querySelectorAll(
     '.ant-select-item-option-content',
   );
-  expect(Array.from(options).map(el => el.textContent)).toEqual([
-    'red',
-    'green',
-  ]);
+  // The Superset Select wrapper sorts options alphabetically, so assert
+  // membership rather than a fixed order.
+  const labels = Array.from(options).map(el => el.textContent);
+  expect(labels).toHaveLength(2);
+  expect(labels).toEqual(expect.arrayContaining(['red', 'green']));
 });
 
 test('emits the new array via handleChange when an option is picked', async () => {
@@ -85,7 +86,7 @@ test('shows a loading state when config.refreshingSchema is true', () => {
   const { container } = render(
     <MultiEnumControl {...baseProps({ config: { refreshingSchema: true } })} />,
   );
-  expect(container.querySelector('.ant-select-suffix-loading')).toBeTruthy();
+  expect(container.querySelector('.ant-spin')).toBeTruthy();
 });
 
 test('treats non-array data as an empty selection without crashing', () => {
